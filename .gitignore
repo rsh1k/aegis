@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+dist/
+.solguard-smartbugs/
+.solguard/
+*.sarif
+*.sbom
