@@ -10,12 +10,23 @@ const COST_FACTOR = { low: 1.0, medium: 0.6, high: 0.3 };
 export function computeRiskScore(findings) {
   let penalty = 0;
   for (const f of findings) {
+    // Prefer CVSS-derived penalty when the semantic engine provided one.
+    if (typeof f.cvss === 'number') {
+      // CVSS 0-10 -> penalty weighted so a 9.0 critical removes ~40 pts
+      penalty += f.cvss * 4.8;
+      continue;
+    }
     const base = SEV_WEIGHT[f.severity] ?? 5;
-    const likelihood = (f.exploitLikelihood ?? 3) / 5;     // 0.2 - 1.0
+    const likelihood = (f.exploitLikelihood ?? 3) / 5;
     const cost = COST_FACTOR[f.attackerCost] ?? 0.6;
     penalty += base * likelihood * cost;
   }
-  const score = Math.max(0, Math.round(100 - penalty));
+  let score = Math.max(0, Math.round(100 - penalty));
+
+  const hasCritical = findings.some(f => f.severity === 'CRITICAL');
+  const hasHigh     = findings.some(f => f.severity === 'HIGH');
+  if (hasCritical)  score = Math.min(score, 45);
+  else if (hasHigh) score = Math.min(score, 70);
 
   const verdict = score >= 80 ? 'ACCEPTABLE RISK'
                 : score >= 60 ? 'REMEDIATE BEFORE MAINNET'

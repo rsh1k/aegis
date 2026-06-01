@@ -173,6 +173,19 @@ export const DETECTORS = [
     fix: 'Upgrade to Solidity ^0.8.x, or import and use OpenZeppelin SafeMath consistently.',
   },
   {
+    id: 'AR-unguarded-multiply',
+    severity: 'CRITICAL',
+    owasp: O.SC09, cwe: C.CWE_190, mitre: M.T1565,
+    confidence: 'medium',
+    exploitLikelihood: 4, attackerCost: 'low',
+    title: 'Unguarded multiplication in pre-0.8 Solidity (overflow)',
+    // matches `... = a * b` style assignments on old compilers (incl. casts)
+    pattern: /(?:uint\d*\s+\w+\s*=|\breturn\b)[^;=]{0,60}[\w)]\s*\*\s*\w+/,
+    requiresAbsence: /SafeMath|pragma solidity\s+[\^>=~ ]*0\.(?:8|9)\.|pragma solidity\s+[\^>=~ ]*[1-9]\d*\.\d/,
+    description: 'A multiplication assigns into a fixed-width integer on a pre-0.8 compiler with no SafeMath. A large multiplier overflows and wraps to a small value — exactly the BeautyChain (BEC) batchTransfer overflow that let an attacker mint astronomical balances in 2018.',
+    fix: 'Upgrade to Solidity 0.8.x (checked arithmetic) or wrap every multiplication in SafeMath.mul(). Validate that amount = count * value cannot exceed the sender balance before mutating state.',
+  },
+  {
     id: 'AR-unchecked-block',
     severity: 'MEDIUM',
     owasp: O.SC07, cwe: C.CWE_682, mitre: M.T1565,

@@ -56,6 +56,31 @@ export function renderReport(contractInfo, findings, meta, options) {
     `${chalk.hex('#4a5a6a').bold(counts.LOW + ' Low')}`
   );
 
+  // Multi-AI panel consensus
+  if (meta.consensus && meta.consensus.totalScanners > 1) {
+    const con = meta.consensus;
+    sectionHeader(`AI PANEL CONSENSUS (${con.totalScanners} scanners)`);
+    con.scanners.forEach(s =>
+      console.log(`  ${chalk.hex('#4da6ff')(s.label.padEnd(28))} ${chalk.hex('#7a90a8')(s.findingCount + ' finding(s)')}`)
+    );
+    console.log('');
+    for (const c of con.clusters.slice(0, 12)) {
+      const confColor = c.confidence === 'HIGH' ? '#00e6b4' : c.confidence === 'MEDIUM' ? '#ffb740' : '#7a90a8';
+      console.log(`  ${severityBadge(c.severity)}  ${chalk.white(c.title)}`);
+      console.log(`     ${chalk.hex(confColor)(c.confidence + ' confidence')} ${dim('·')} ${c.agreement}/${c.totalScanners} scanners agree ${dim('·')} ${chalk.hex('#4da6ff')(c.owasp || '')}`);
+      console.log(`     ${dim('flagged by:')} ${c.agreedBy.join(', ')}${c.dissentedBy.length ? chalk.hex('#7a90a8')('   silent: ' + c.dissentedBy.join(', ')) : ''}`);
+    }
+    console.log('');
+    sectionHeader('PANEL DISCUSSION');
+    con.discussion.lines.forEach(l => {
+      // wrap each discussion line
+      const words = l.split(' '); let line = '  • '; const out = [];
+      for (const w of words) { if ((line + w).length > 76) { out.push(line); line = '    ' + w + ' '; } else line += w + ' '; }
+      if (line.trim()) out.push(line);
+      console.log(out.map(x => chalk.hex('#7a90a8')(x)).join('\n'));
+    });
+  }
+
   // Attack paths — the red-team lens
   if (meta.attackPaths && meta.attackPaths.length) {
     sectionHeader('ATTACK PATHS (red-team analysis)');
@@ -74,8 +99,15 @@ export function renderReport(contractInfo, findings, meta, options) {
       console.log(`\n  ${severityBadge(f.severity)}  ${chalk.white.bold(f.title)}`);
       const tags = [f.owasp, f.cwe, f.mitre].filter(Boolean).join('  ');
       if (tags) console.log(`  ${chalk.hex('#4da6ff')(tags)}`);
-      console.log(`  ${dim('Location:')} ${f.location || 'n/a'}  ${dim('Detector:')} ${f.source === 'static' ? 'static' : 'Claude AI'}` +
+      console.log(`  ${dim('Location:')} ${f.location || 'n/a'}  ${dim('Detector:')} ${f.source || 'static'}` +
         (f.exploitLikelihood ? `  ${dim('Exploitability:')} ${f.exploitLikelihood}/5  ${dim('Attacker cost:')} ${f.attackerCost}` : ''));
+      if (typeof f.precision === 'number') {
+        const provColor = f.precisionProvenance === 'measured' ? '#00e6b4' : '#ffb740';
+        const provLabel = f.precisionProvenance === 'measured'
+          ? `measured, n=${f.precisionSamples}`
+          : 'estimated, unvalidated';
+        console.log(`  ${dim('Detector precision:')} ${chalk.hex(provColor)((f.precision * 100).toFixed(0) + '%')} ${chalk.hex(provColor)('(' + provLabel + ')')}`);
+      }
       console.log('\n' + wrap(f.description, '  '));
       if (f.fix) console.log(`\n  ${chalk.hex('#00e6b4').bold('Fix:')} ${wrap(f.fix, '').trim()}`);
       if (i < sorted.length - 1) console.log('\n  ' + chalk.hex('#162030')('-'.repeat(60)));

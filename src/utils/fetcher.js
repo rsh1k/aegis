@@ -31,7 +31,7 @@ export async function fetchSource(target, network = 'ethereum') {
     const code = fs.readFileSync(target, 'utf8');
     return {
       type: 'file',
-      name: path.basename(target),
+      name: path.basename(target).replace(/\.sol$/, ''),
       source: code,
       files: [{ name: path.basename(target), code }],
     };

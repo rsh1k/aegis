@@ -92,3 +92,33 @@ for it.
 - Precision is noisy on legacy Solidity; modern-code precision is higher.
 - Performance: all detectors are bounded to avoid regex DoS — full 143-contract
   scan runs in under 1 second.
+
+## Taint detector validation (measured, not estimated)
+
+The cross-function taint detectors are validated against a hand-labeled set in
+`benchmark/taint-labeled/` — 10 contracts (4 true positives, 6 true negatives).
+Ground truth is declared in each file header (`@expect` / `@safe`), established
+by a human, NOT inferred by any AI. This avoids the circularity of AI grading AI.
+
+```bash
+npm run validate-taint
+```
+
+Current measured results (all four taint detectors):
+
+| Detector | Precision | Recall | Provenance |
+|---|---|---|---|
+| TAINT-delegatecall-target | 1.00 | 1.00 | measured |
+| TAINT-call-target | 1.00 | 1.00 | measured |
+| TAINT-index-write | 1.00 | 1.00 | measured |
+| TAINT-selfdestruct-arg | 1.00 | 1.00 | measured |
+
+The validation process found and fixed a real false positive: a standard ERC20
+`bal[to] += amt` credit was incorrectly flagged as an arbitrary index write. The
+fix restricts the sink to direct overwrites (`=`), not additive accounting. This
+bug would have shipped if the precision numbers had been trusted as estimates.
+
+### Provenance flags
+Every detector in `calibration.js` carries `provenance: 'measured'` or
+`'estimated'`. The report surfaces this per finding ("measured, n=2" vs
+"estimated, unvalidated") so a prior is never mistaken for evidence.

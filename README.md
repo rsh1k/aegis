@@ -129,3 +129,58 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The most v
 ## License
 
 [MIT](LICENSE) © 2026 rsh1k
+
+## Multi-AI Panel Mode (v3.1)
+
+Run several AI auditors in parallel and have their findings cross-referenced by a
+consensus engine — agreement across independent models is a strong precision signal.
+
+```bash
+# Configure provider keys (stored encrypted)
+aegis config
+
+# Run the full panel: every configured provider + the local semantic engine
+aegis audit ./contracts/MyToken.sol --panel
+
+# Or pick specific providers
+aegis audit ./contracts/MyToken.sol --provider anthropic,openai
+```
+
+Supported provider types: `anthropic` (Claude), `openai` (GPT), and any
+`openai-compatible` gateway (set a baseURL). Keys come from `aegis config` or the
+`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` environment variables.
+
+The panel produces:
+- **Consensus clusters** — each issue with how many scanners agreed and a confidence rating (HIGH = 3+ scanners, MEDIUM = 2, LOW = unique).
+- **Panel discussion** — a summary of where scanners converged, where they were split (review these), and unique leads.
+
+The local semantic engine counts as one independent scanner, so the panel works
+even with a single AI provider configured.
+
+## Advanced Analysis (v3.2)
+
+Aegis now combines five analysis techniques in one pass:
+
+| Technique | Tier | What it adds |
+|---|---|---|
+| AST semantic model | 1–2 | Per-function guards, data flow, self-scope awareness |
+| **Cross-function taint** | 2 | Traces attacker-controlled input across function calls to dangerous sinks; only flags *unsanitized* flows |
+| **Inheritance resolution** | — | Recognizes guards (onlyOwner, nonReentrant) defined in base contracts, including OpenZeppelin |
+| **Confidence calibration** | — | Every finding carries an empirical precision score learned from the benchmark |
+| **Formal verification** | 5 | `--formal` runs solc SMTChecker to mathematically check assertions/overflow |
+| **Fuzz scaffolding** | 4 | `--fuzz` generates Foundry + Echidna invariant test files for your contract |
+| Multi-AI panel | — | `--panel` runs multiple AI auditors + consensus adjudication |
+
+```bash
+# Everything: semantic + taint + formal + fuzz scaffolds + AI panel
+aegis audit ./contracts/Vault.sol --formal --fuzz --panel
+
+# Fast deterministic pass (no AI, no external tools)
+aegis audit ./contracts/Vault.sol --offline
+```
+
+### What requires external tools
+- `--formal` needs `solc` installed (degrades gracefully if absent).
+- `--fuzz` generates test files; you run them with `forge` / `echidna`.
+
+Everything else (semantic, taint, inheritance, calibration) runs with zero external dependencies.
