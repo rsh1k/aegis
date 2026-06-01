@@ -108,7 +108,7 @@ export function generateSARIF(contractInfo, findings) {
       tool: { driver: {
         name: 'Aegis',
         version: '2.1.0',
-        informationUri: 'https://github.com/rsh1k/solguard',
+        informationUri: 'https://github.com/rsh1k/aegis',
         rules,
       }},
       results,

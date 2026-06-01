@@ -19,8 +19,8 @@ evidence seriously — every detection claim is backed by the benchmark.
 ## Development
 
 ```bash
-git clone https://github.com/rsh1k/cd13282-blockchain-with-solidity-project.git
-cd cd13282-blockchain-with-solidity-project
+git clone https://github.com/rsh1k/aegis.git
+cd aegis
 npm install
 node index.js audit ./benchmark/fixtures/reentrancy_simple_dao.sol --offline
 node index.js benchmark

@@ -129,4 +129,3 @@ Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The most v
 ## License
 
 [MIT](LICENSE) © 2026 rsh1k
-# aegis

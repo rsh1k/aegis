@@ -1,29 +1,46 @@
 {
   "name": "aegis-audit",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "AI-powered smart contract security auditor — OWASP SC Top 10 (2026), MITRE ATT&CK, CWE, and NIST SSDF compliance outputs with a benchmarked detection engine",
   "type": "module",
   "main": "index.js",
-  "bin": { "aegis": "index.js" },
+  "bin": {
+    "aegis": "index.js"
+  },
   "scripts": {
     "start": "node index.js",
     "benchmark": "node index.js benchmark"
   },
   "keywords": [
-    "solidity", "smart-contract", "security", "audit", "auditor",
-    "blockchain", "ethereum", "web3", "defi", "cli",
-    "owasp", "mitre-attack", "cwe", "nist-ssdf", "sarif", "sbom",
-    "vulnerability", "static-analysis", "reentrancy"
+    "solidity",
+    "smart-contract",
+    "security",
+    "audit",
+    "auditor",
+    "blockchain",
+    "ethereum",
+    "web3",
+    "defi",
+    "cli",
+    "owasp",
+    "mitre-attack",
+    "cwe",
+    "nist-ssdf",
+    "sarif",
+    "sbom",
+    "vulnerability",
+    "static-analysis",
+    "reentrancy"
   ],
   "author": "rsh1k",
   "license": "MIT",
-  "homepage": "https://github.com/rsh1k/cd13282-blockchain-with-solidity-project#readme",
+  "homepage": "https://github.com/rsh1k/aegis#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rsh1k/cd13282-blockchain-with-solidity-project.git"
+    "url": "git+https://github.com/rsh1k/aegis.git"
   },
   "bugs": {
-    "url": "https://github.com/rsh1k/cd13282-blockchain-with-solidity-project/issues"
+    "url": "https://github.com/rsh1k/aegis/issues"
   },
   "dependencies": {
     "@inquirer/prompts": "^7.5.2",
@@ -33,6 +50,14 @@
     "commander": "^15.0.0",
     "ora": "^9.4.0"
   },
-  "engines": { "node": ">=18.0.0" },
-  "files": ["index.js", "src/", "benchmark/", "LICENSE", "README.md"]
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.js",
+    "src/",
+    "benchmark/",
+    "LICENSE",
+    "README.md"
+  ]
 }

@@ -1,16 +1,22 @@
 #!/usr/bin/env node
 import { program } from 'commander';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { auditCommand } from './src/commands/audit.js';
 import { configCommand } from './src/commands/config.js';
 import { benchmarkCommand } from './src/commands/benchmark.js';
 import { banner } from './src/ui/banner.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8'));
 
 await banner();
 
 program
   .name('aegis')
   .description('AI-powered smart contract security auditor - OWASP SC Top 10 (2026), MITRE, NIST SSDF')
-  .version('2.1.0');
+  .version(pkg.version);
 
 program
   .command('audit <target>')

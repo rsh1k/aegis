@@ -14,8 +14,16 @@ const ETHERSCAN_APIS = {
 export async function fetchSource(target, network = 'ethereum') {
   const lc = target.toLowerCase();
 
-  // ── Local .sol file ──────────────────────────────────────────────
+  // ── On-chain address (check first; unambiguous format) ───────────
+  if (/^0x[0-9a-fA-F]{40}$/.test(target)) {
+    return fetchFromChain(target, network);
+  }
+
+  // ── Local .sol file or folder ────────────────────────────────────
   if (lc.endsWith('.sol') || fs.existsSync(target)) {
+    if (!fs.existsSync(target)) {
+      throw new Error(`File not found: "${target}". Check the path and try again.`);
+    }
     const stat = fs.statSync(target);
     if (stat.isDirectory()) {
       return fetchFolder(target);
@@ -32,11 +40,6 @@ export async function fetchSource(target, network = 'ethereum') {
   // ── Folder of .sol files ─────────────────────────────────────────
   if (fs.existsSync(target) && fs.statSync(target).isDirectory()) {
     return fetchFolder(target);
-  }
-
-  // ── On-chain address ─────────────────────────────────────────────
-  if (/^0x[0-9a-fA-F]{40}$/.test(target)) {
-    return fetchFromChain(target, network);
   }
 
   throw new Error(`Cannot resolve target: "${target}"\nExpected: 0x address, .sol file, or folder path`);
