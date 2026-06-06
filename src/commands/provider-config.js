@@ -12,13 +12,14 @@ import { loadConfig, saveConfig } from '../utils/secure-config.js';
 export const DEFAULT_PROVIDERS = [
   { id: 'anthropic', type: 'anthropic', model: 'claude-sonnet-4-20250514', label: 'Claude (Sonnet)' },
   { id: 'openai', type: 'openai', model: 'gpt-4o', label: 'GPT-4o' },
-  // Local, free, private. Override the model via config; pull it first with `ollama pull`.
-  { id: 'ollama', type: 'ollama', model: 'gemma2', label: 'Ollama (local: gemma2)', baseURL: 'http://localhost:11434/v1' },
+  // Local, free, private. model:null → auto-detect from whatever you've pulled,
+  // or set it explicitly with --model. No hardcoded model name.
+  { id: 'ollama', type: 'ollama', model: null, label: 'Ollama (local)', baseURL: 'http://localhost:11434/v1' },
 ];
 
 // Resolve which providers to actually run, given CLI flags + stored config + env.
-// Returns only providers that have a usable API key (Ollama needs none).
-export function resolveProviders({ panel, providerList } = {}) {
+// `model` (from --model) overrides the configured model for the selected provider(s).
+export function resolveProviders({ panel, providerList, model } = {}) {
   const cfg = loadConfig();
   const configured = cfg.providers && cfg.providers.length ? cfg.providers : DEFAULT_PROVIDERS;
 
@@ -35,9 +36,11 @@ export function resolveProviders({ panel, providerList } = {}) {
   // Attach keys; Ollama is local and needs none, so it always passes.
   const withKeys = [];
   for (const p of selected) {
-    if (p.type === 'ollama') { withKeys.push({ ...p, apiKey: 'ollama' }); continue; }
-    const key = providerKey(p, cfg);
-    if (key) withKeys.push({ ...p, apiKey: key });
+    // --model overrides the configured model for whichever provider is selected.
+    const resolved = model ? { ...p, model } : { ...p };
+    if (resolved.type === 'ollama') { withKeys.push({ ...resolved, apiKey: 'ollama' }); continue; }
+    const key = providerKey(resolved, cfg);
+    if (key) withKeys.push({ ...resolved, apiKey: key });
   }
   return withKeys;
 }

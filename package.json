@@ -1,6 +1,6 @@
 {
   "name": "aegis-audit",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "AI-powered smart contract security auditor — OWASP SC Top 10 (2026), MITRE ATT&CK, CWE, and NIST SSDF compliance outputs with a benchmarked detection engine",
   "type": "module",
   "main": "index.js",

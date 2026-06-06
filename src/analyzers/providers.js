@@ -103,6 +103,17 @@ async function callOpenAICompatible({ apiKey, model, prompt, timeout, baseURL })
   return res.data.choices?.[0]?.message?.content || '';
 }
 
+// List models currently available in a local Ollama instance. Returns [] on failure.
+export async function listOllamaModels(baseURL) {
+  const base = (baseURL || 'http://localhost:11434/v1').replace(/\/$/, '');
+  try {
+    const res = await axios.get(base + '/models', { timeout: 5000 });
+    return (res.data?.data || []).map(m => m.id).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 // ── Ollama (local models — gemma, deepseek, llama, mistral, etc.) ───────────
 // Ollama exposes an OpenAI-compatible endpoint at http://localhost:11434/v1.
 // No API key is required (any string works). Runs fully on the user's machine:

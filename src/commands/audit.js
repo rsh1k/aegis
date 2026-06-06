@@ -11,7 +11,7 @@ import { resolveInheritance } from '../analyzers/inheritance.js';
 import { calibrateAll } from '../analyzers/calibration.js';
 import { smtCheck, generateInvariants } from '../analyzers/external-tools.js';
 import { claudeAnalyze } from '../analyzers/claude.js';
-import { runPanel } from '../analyzers/providers.js';
+import { runPanel, listOllamaModels } from '../analyzers/providers.js';
 import { adjudicate } from '../analyzers/consensus.js';
 import { resolveProviders } from './provider-config.js';
 import { computeRiskScore, categoryBreakdown, synthesizeAttackPaths } from '../analyzers/risk.js';
@@ -109,7 +109,27 @@ export async function auditCommand(target, options) {
 
     if (!offline && (options.panel || options.provider)) {
       // ── Multi-AI panel mode ──────────────────────────────────────────────
-      const providers = resolveProviders({ panel: options.panel, providerList: options.provider });
+      let providers = resolveProviders({ panel: options.panel, providerList: options.provider, model: options.model });
+
+      // Auto-detect the Ollama model when none was specified: ask Ollama what's
+      // actually installed and use the first available, rather than guessing a name.
+      for (const p of providers) {
+        if (p.type === 'ollama' && !p.model) {
+          const available = await listOllamaModels(p.baseURL);
+          if (available.length > 0) {
+            p.model = available[0];
+            p.label = `Ollama (local: ${p.model})`;
+            if (available.length > 1) {
+              console.log(chalk.hex('#4a5a6a')(`  i Using Ollama model "${p.model}". Others available: ${available.slice(1).join(', ')}. Pick one with --model.`));
+            }
+          } else {
+            p.label = 'Ollama (local: none found)';
+          }
+        } else if (p.type === 'ollama') {
+          p.label = `Ollama (local: ${p.model})`;
+        }
+      }
+
       if (providers.length === 0) {
         spinner.warn(chalk.hex('#ffb740')('No AI providers have keys configured. Run "aegis config" or set ANTHROPIC_API_KEY / OPENAI_API_KEY.'));
       } else {
