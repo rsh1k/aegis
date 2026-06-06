@@ -1,22 +1,22 @@
-# SolGuard Benchmark
+# Aegis Benchmark
 
-Measures the accuracy of SolGuard's **static detector layer** against labeled
+Measures the accuracy of Aegis's **static detector layer** against labeled
 vulnerable contracts, so claims about detection are evidence-based, not asserted.
 
 ## Run it
 
 ```bash
 # Quick run against the 7 built-in labeled fixtures (offline, no deps)
-solguard benchmark
+aegis benchmark
 
 # Full academic benchmark: clone & score SmartBugs Curated (143 contracts)
-solguard benchmark --fetch-smartbugs
+aegis benchmark --fetch-smartbugs
 
 # Your own labeled dataset
-solguard benchmark --dataset ./my-labeled-contracts/
+aegis benchmark --dataset ./my-labeled-contracts/
 
 # Machine-readable output for CI dashboards
-solguard benchmark --fetch-smartbugs --output benchmark.json
+aegis benchmark --fetch-smartbugs --output benchmark.json
 ```
 
 ## Dataset
@@ -32,7 +32,7 @@ Ground-truth labels are read from the dataset's own annotations:
 ## How scoring works
 
 - **Positive** for category C = contract carries a `<yes>` marker for C.
-- **Detection** of C = SolGuard emits any OWASP SC 2026 id mapped from C (see `mapping.js`).
+- **Detection** of C = Aegis emits any OWASP SC 2026 id mapped from C (see `mapping.js`).
 - Scoring is **contract-level per category**, matching how SmartBugs tool
   comparisons report.
 - We compute, per category and overall: precision, recall, F1, and
@@ -61,7 +61,7 @@ improve; treat any regression as a release blocker.
 
 ## Baseline results (static layer, SmartBugs Curated, 143 contracts)
 
-Measured with `solguard benchmark --fetch-smartbugs`. These are the deterministic
+Measured with `aegis benchmark --fetch-smartbugs`. These are the deterministic
 static-layer numbers; the Claude AI layer adds further semantic recall on top.
 
 | Category | Support | Recall | Precision |
@@ -83,7 +83,7 @@ overflow detector broadly; on modern 0.8+ code this is far lower noise.
 For comparison, the ICSE 2020 study (Durieux et al.) found that individual
 mature tools (Slither, Mythril, etc.) each detected only a fraction of the
 dataset, which is why running multiple tools — plus a human audit — is the
-recommended practice. SolGuard is one layer in that stack, not a replacement
+recommended practice. Aegis is one layer in that stack, not a replacement
 for it.
 
 ### Known gaps (tracked for improvement)
