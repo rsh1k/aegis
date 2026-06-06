@@ -184,3 +184,27 @@ aegis audit ./contracts/Vault.sol --offline
 - `--fuzz` generates test files; you run them with `forge` / `echidna`.
 
 Everything else (semantic, taint, inheritance, calibration) runs with zero external dependencies.
+
+## Local AI Models via Ollama (v3.3) — free & private
+
+Run the AI panel against **local models** (gemma, deepseek, llama, mistral, qwen…)
+with zero cost, no API key, and your source code never leaving the machine.
+
+```bash
+# 1. Install Ollama (ollama.com), then pull a model:
+ollama pull gemma2          # or: deepseek-coder, llama3.2, qwen2.5-coder, mistral
+
+# 2. Run Aegis against the local model:
+aegis audit ./contracts/Vault.sol --provider ollama
+
+# 3. Mix local + cloud in one panel for cross-model consensus:
+aegis audit ./contracts/Vault.sol --panel   # runs every configured provider
+```
+
+Ollama uses an OpenAI-compatible endpoint at `http://localhost:11434/v1`, so no
+key is required. To use a different local model, set it in your config (default is
+`gemma2`). Aegis gives a clear hint if Ollama isn't running or the model isn't pulled.
+
+**Why this matters:** the local model becomes an independent scanner in the
+consensus panel. In testing, a local model caught a signature-replay bug (missing
+nonce) that the deterministic static layer alone could not — for free, fully offline.

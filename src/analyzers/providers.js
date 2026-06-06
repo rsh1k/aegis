@@ -103,6 +103,21 @@ async function callOpenAICompatible({ apiKey, model, prompt, timeout, baseURL })
   return res.data.choices?.[0]?.message?.content || '';
 }
 
+// ── Ollama (local models — gemma, deepseek, llama, mistral, etc.) ───────────
+// Ollama exposes an OpenAI-compatible endpoint at http://localhost:11434/v1.
+// No API key is required (any string works). Runs fully on the user's machine:
+// free, private, and source never leaves the host.
+async function callOllama({ model, prompt, timeout, baseURL }) {
+  const base = baseURL || 'http://localhost:11434/v1';
+  const url = base.replace(/\/$/, '') + '/chat/completions';
+  const res = await axios.post(
+    url,
+    { model, messages: [{ role: 'user', content: prompt }], stream: false },
+    { headers: { Authorization: 'Bearer ollama', 'content-type': 'application/json' }, timeout }
+  );
+  return res.data.choices?.[0]?.message?.content || '';
+}
+
 // ── Public: run one provider ────────────────────────────────────────────────
 export async function runProvider(provider, { source, staticFindings, metrics, timeout = 90000 }) {
   const prompt = buildAuditPrompt(source, staticFindings, metrics);
@@ -113,6 +128,10 @@ export async function runProvider(provider, { source, staticFindings, metrics, t
       raw = await callAnthropic({ apiKey: provider.apiKey, model: provider.model, prompt, timeout });
     } else if (provider.type === 'openai' || provider.type === 'openai-compatible') {
       raw = await callOpenAICompatible({ apiKey: provider.apiKey, model: provider.model, prompt, timeout, baseURL: provider.baseURL });
+    } else if (provider.type === 'ollama') {
+      // Local models are slower; give them a generous timeout if caller used the default.
+      const localTimeout = timeout === 90000 ? 300000 : timeout;
+      raw = await callOllama({ model: provider.model, prompt, timeout: localTimeout, baseURL: provider.baseURL });
     } else {
       return { id: provider.id, ok: false, error: `Unknown provider type: ${provider.type}`, findings: [] };
     }
@@ -127,12 +146,21 @@ export async function runProvider(provider, { source, staticFindings, metrics, t
     };
   } catch (e) {
     const status = e.response?.status;
+    const connRefused = e.code === 'ECONNREFUSED' || /ECONNREFUSED|connect/i.test(e.message || '');
+    let error;
+    if (provider.type === 'ollama' && connRefused) {
+      error = 'Ollama not reachable at ' + (provider.baseURL || 'http://localhost:11434') + ' — is it running? (start with "ollama serve" and pull a model, e.g. "ollama pull gemma2")';
+    } else if (provider.type === 'ollama' && status === 404) {
+      error = `model "${provider.model}" not found in Ollama — pull it first: "ollama pull ${provider.model}"`;
+    } else {
+      error = status === 401 ? 'auth failed (bad API key)' : status === 429 ? 'rate limited' : (e.message || 'request failed');
+    }
     return {
       id: provider.id,
       label: provider.label || provider.id,
       ok: false,
       ms: Date.now() - started,
-      error: status === 401 ? 'auth failed (bad API key)' : status === 429 ? 'rate limited' : (e.message || 'request failed'),
+      error,
       findings: [],
     };
   }

@@ -12,10 +12,12 @@ import { loadConfig, saveConfig } from '../utils/secure-config.js';
 export const DEFAULT_PROVIDERS = [
   { id: 'anthropic', type: 'anthropic', model: 'claude-sonnet-4-20250514', label: 'Claude (Sonnet)' },
   { id: 'openai', type: 'openai', model: 'gpt-4o', label: 'GPT-4o' },
+  // Local, free, private. Override the model via config; pull it first with `ollama pull`.
+  { id: 'ollama', type: 'ollama', model: 'gemma2', label: 'Ollama (local: gemma2)', baseURL: 'http://localhost:11434/v1' },
 ];
 
 // Resolve which providers to actually run, given CLI flags + stored config + env.
-// Returns only providers that have a usable API key.
+// Returns only providers that have a usable API key (Ollama needs none).
 export function resolveProviders({ panel, providerList } = {}) {
   const cfg = loadConfig();
   const configured = cfg.providers && cfg.providers.length ? cfg.providers : DEFAULT_PROVIDERS;
@@ -30,9 +32,10 @@ export function resolveProviders({ panel, providerList } = {}) {
     selected = configured.slice(0, 1);
   }
 
-  // Attach keys from env or stored config; drop providers without a key
+  // Attach keys; Ollama is local and needs none, so it always passes.
   const withKeys = [];
   for (const p of selected) {
+    if (p.type === 'ollama') { withKeys.push({ ...p, apiKey: 'ollama' }); continue; }
     const key = providerKey(p, cfg);
     if (key) withKeys.push({ ...p, apiKey: key });
   }
@@ -40,6 +43,8 @@ export function resolveProviders({ panel, providerList } = {}) {
 }
 
 function providerKey(provider, cfg) {
+  // Local models require no key.
+  if (provider.type === 'ollama') return 'ollama';
   // Env var precedence (enterprise: use secrets manager)
   if (provider.type === 'anthropic') {
     if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
